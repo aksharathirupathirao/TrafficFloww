@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TrafficFlow - Smart Traffic Management System.">
+
+    <title>TrafficFlow | Smart Traffic Management System</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        #dashboardTrafficMap {
+            width: 100%;
+            height: 360px;
+            border-radius: 12px;
+            z-index: 1;
+        }
+
+        .traffic-map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .traffic-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .traffic-legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .traffic-heavy { background: #dc2626; }
+        .traffic-moderate { background: #f59e0b; }
+        .traffic-free { background: #16a34a; }
+
+        #dashboardMapStatus {
+            margin-top: 12px;
+            font-size: 13px;
+        }
+
+        /* CITY SELECTOR */
+
+        .city-selector-panel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 22px;
+        }
+
+        .city-selector-panel h3 {
+            color: #173b63;
+            margin-bottom: 7px;
+            font-size: 16px;
+        }
+
+        .city-selector-panel p {
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+
+        .city-selector-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .city-selector-row input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .city-selector-results {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .city-selector-results button {
+            text-align: left;
+            background: #f8fafc;
+            color: #173b63;
+            border: 1px solid #e2e8f0;
+        }
+
+        .city-selector-results button:hover {
+            background: #eff6ff;
+        }
+
+        .selected-city-label {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 7px 12px;
+            border-radius: 20px;
+            background: #eaf8f1;
+            color: #16865b;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* GLOBAL SEARCH */
+
+        .dashboard-global-search {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 22px;
+            margin: 20px 0 24px;
+        }
+
+        .dashboard-search-heading h2 {
+            margin-bottom: 6px;
+            color: #1e293b;
+            font-size: 20px;
+        }
+
+        .dashboard-search-heading p {
+            margin-bottom: 16px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .dashboard-search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dashboard-search-box input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .dashboard-search-status,
+        .dashboard-traffic-search-status {
+            margin: 12px 0;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .dashboard-search-results {
+            display: grid;
+            gap: 9px;
+        }
+
+        .dashboard-search-result {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #1e293b;
+            text-align: left;
+        }
+
+        .dashboard-search-result span {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        /* TRAFFIC ANALYTICS */
+
+        .analytics-panel {
+            margin-top: 24px;
+        }
+
+        .analytics-comparison {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 22px;
+        }
+
+        .analytics-comparison h4 {
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        .analytics-location {
+            margin-bottom: 20px;
+        }
+
+        .analytics-location:last-child {
+            margin-bottom: 0;
+        }
+
+        .analytics-location-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 9px;
+            color: #334155;
+            font-size: 14px;
+        }
+
+        .analytics-location-heading strong {
+            color: #1d4ed8;
+        }
+
+        .analytics-bar-background {
+            width: 100%;
+            height: 12px;
+            background: #dbeafe;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .analytics-bar {
+            width: 0%;
+            height: 100%;
+            background: #2563eb;
+            border-radius: 20px;
+            transition: width .5s ease;
+        }
+
+        .traffic-condition-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .traffic-condition-heavy {
+            color: #991b1b;
+            background: #fee2e2;
+        }
+
+        .traffic-condition-moderate {
+            color: #9a3412;
+            background: #ffedd5;
+        }
+
+        .traffic-condition-smooth {
+            color: #166534;
+            background: #dcfce7;
+        }
+
+        /* TRAFFIC TREND */
+
+        #trafficTrendChart {
+            display: block;
+            max-width: 100%;
+            min-height: 220px;
+        }
+
+        #trafficTrendChart .chart-grid {
+            stroke: #e2e8f0;
+            stroke-width: 1;
+        }
+
+        #trafficTrendChart .chart-label {
+            fill: #64748b;
+            font-size: 12px;
+        }
+
+        /* ROUTE PLANNER */
+
+        #hyderabadMap {
+            width: 100%;
+            height: 500px;
+            min-height: 350px;
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 1;
+            background: #e8edf3;
+        }
+
+        .city-route-panel {
+            position: relative;
+            z-index: 5;
+        }
+
+        .city-suggestions {
+            display: none;
+            position: relative;
+            width: 100%;
+            margin-top: -12px;
+            margin-bottom: 14px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 20;
+        }
+
+        .city-suggestion-item {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            text-align: left;
+            color: #172b4d;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .city-route-option {
+            display: block;
+            width: 100%;
+            margin: 9px 0;
+            padding: 13px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            color: #172b4d;
+            text-align: left;
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 700px) {
+            .city-selector-row,
+            .dashboard-search-box {
+                flex-direction: column;
+            }
+
+            .city-selector-row button,
+            .dashboard-search-box button {
+                width: 100%;
+                min-height: 44px;
+            }
+
+            #hyderabadMap {
+                height: 380px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            #hyderabadMap {
+                height: 320px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <span class="brand-icon">🚦</span>
+            <div>
+                <h2>TrafficFlow</h2>
+                <p>SMART CITY SYSTEM</p>
+            </div>
+        </div>
+
+        <p class="sidebar-heading">MAIN MENU</p>
+
+        <nav class="sidebar-nav">
+
+            <button class="nav-item active" data-view="dashboard">
+                🏠 <span>Dashboard</span>
+            </button>
+
+            <button class="nav-item" data-view="city-map">
+                🗺️ <span>City Route Planner</span>
+            </button>
+
+            <button class="nav-item" data-view="buses">
+                🚌 <span>City Bus Services</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-footer">
+            <span class="status-dot"></span>
+            SYSTEM ONLINE
+        </div>
+
+    </aside>
+
+
+    <!-- MAIN WORKSPACE -->
+
+    <main class="main-workspace">
+
+        <!-- TOP HEADER -->
+
+        <header class="topbar">
+
+            <button
+                class="menu-toggle"
+                id="menuToggle"
+                type="button"
+                aria-label="Toggle navigation menu"
+                aria-expanded="false">
+                ☰
+            </button>
+
+            <div class="brand">
+                <div>
+                    <h1>TrafficFlow</h1>
+                    <p>SMART TRAFFIC MANAGEMENT SYSTEM</p>
+                </div>
+            </div>
+
+            <div class="page-heading">
+                <h2 id="currentPageTitle">Traffic Control Dashboard</h2>
+                <p id="pageBreadcrumb">Dashboard / Live Traffic</p>
+            </div>
+
+            <div class="live-clock">
+                <div id="liveTime">00:00:00</div>
+                <div id="liveDate">Loading date...</div>
+            </div>
+
+            <div class="status-group">
+
+                <div class="system-status" id="backendStatus">
+                    <span class="status-dot" id="backendStatusDot"></span>
+                    <span id="backendStatusText">CHECKING SERVER...</span>
+                </div>
+
+                <div class="simulation-status">
+                    <span class="simulation-dot"></span>
+                    LIVE TRAFFIC SYSTEM
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- DASHBOARD -->
+
+        <section class="page-view active-view" id="view-dashboard">
+
+            <section class="welcome">
+
+                <div>
+                    <p class="eyebrow">INTELLIGENT TRANSPORTATION</p>
+                    <h2>Live Traffic Dashboard</h2>
+
+                    <p>
+                        Monitor traffic conditions and explore
+                        transportation information in your selected city.
+                    </p>
+                </div>
+
+                <div class="date-label">LIVE NETWORK MONITOR</div>
+
+            </section>
+
+
+            <!-- CITY SELECTOR -->
+
+            <section class="city-selector-panel">
+
+                <h3>🌍 Select Your City</h3>
+
+                <p>
+                    Search for a city to update the TrafficFlow dashboard,
+                    traffic map, analytics and route planner.
+                </p>
+
+                <div class="city-selector-row">
+
+                    <input
+                        type="text"
+                        id="citySelectorInput"
+                        placeholder="Enter a city name, e.g. Hyderabad or Bengaluru"
+                        autocomplete="off"
+                    >
+
+                    <button
+                        type="button"
+                        id="citySelectorButton">
+                        Search City
+                    </button>
+
+                </div>
+
+                <div
+                    id="citySelectorResults"
+                    class="city-selector-results"
+                    aria-live="polite">
+                </div>
+
+                <div class="selected-city-label">
+                    Selected City: <span id="selectedCityName">Hyderabad</span>
+                </div>
+
+                <p id="citySelectorStatus" class="demo-note">
+                    Hyderabad is the default selected city.
+                </p>
+
+            </section>
+
+
+            <!-- GLOBAL SEARCH -->
+
+            <section class="dashboard-global-search">
+
+                <div class="dashboard-search-heading">
+                    <h2 id="dashboardSearchHeading">Search Hyderabad</h2>
+
+                    <p>
+                        Find traffic locations, bus routes,
+                        bus stops and nearby places.
+                    </p>
+                </div>
+
+                <div class="dashboard-search-box">
+
+                    <input
+                        type="text"
+                        id="dashboardSearchInput"
+                        placeholder="Search traffic locations, bus routes or places..."
+                        autocomplete="off"
+                    >
+
+                    <button type="button" id="dashboardSearchButton">
+                        Search
+                    </button>
+
+                </div>
+
+                <p id="dashboardSearchStatus" class="dashboard-search-status">
+                    Search within your selected city.
+                </p>
+
+                <div
+                    id="dashboardSearchResults"
+                    class="dashboard-search-results">
+                </div>
+
+            </section>
+
+
+            <!-- LIVE TRAFFIC -->
+
+            <section class="panel live-traffic-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3 id="liveTrafficHeading">🌐 Live Hyderabad Traffic</h3>
+                        <p>Traffic measurements retrieved from TomTom Traffic API</p>
+                    </div>
+
+                    <span class="live-label">● LIVE DATA</span>
+                </div>
+                <!-- LIVE TRAFFIC ROAD SEARCH -->
+
+<div class="traffic-road-search">
+
+    <h4>🔎 Search Traffic by Road or Location</h4>
+
+    <p>
+        Search for a road or area to view its live traffic measurements.
+    </p>
+
+    <div class="traffic-road-search-row">
+
+        <input
+            type="text"
+            id="trafficRoadSearchInput"
+            placeholder="Search roads, e.g. Gachibowli, Madhapur, Kukatpally..."
+            autocomplete="off"
+        >
+
+        <button
+            type="button"
+            id="trafficRoadSearchButton">
+            Search Traffic
+        </button>
+
+    </div>
+
+    <div
+        id="trafficRoadSearchResults"
+        class="traffic-road-search-results"
+        aria-live="polite">
+    </div>
+
+    <p
+        id="trafficRoadSearchStatus"
+        class="demo-note"
+        aria-live="polite">
+        Search for a road to view its traffic measurements.
+    </p>
+
+</div>
+
+                <div class="livde-traffic-grid" id="liveTrafficGrid">
+
+                    <div class="live-traffic-card">
+                        <h4>Loading traffic point 1...</h4>
+
+                        <p>Current Speed</p>
+                        <h2 id="liveSpeed1">-- km/h</h2>
+
+                        <p>Travel Time</p>
+                        <h3 id="liveTime1">-- min</h3>
+
+                        <p>Free-flow Speed</p>
+                        <strong id="freeFlow1">-- km/h</strong>
+
+                        <p>Confidence</p>
+                        <strong id="confidence1">--</strong>
+                    </div>
+
+                    <div class="live-traffic-card">
+                        <h4>Loading traffic point 2...</h4>
+
+                        <p>Current Speed</p>
+                        <h2 id="liveSpeed2">-- km/h</h2>
+
+                        <p>Travel Time</p>
+                        <h3 id="liveTime2">-- min</h3>
+
+                        <p>Free-flow Speed</p>
+                        <strong id="freeFlow2">-- km/h</strong>
+
+                        <p>Confidence</p>
+                        <strong id="confidence2">--</strong>
+                    </div>
+
+                </div>
+
+                <p id="liveTrafficStatus">
+                    Waiting for live traffic data...
+                </p>
+
+                <p id="liveTrafficUpdated">
+                    Last updated: --
+                </p>
+
+                <p class="demo-note">
+                    Measurements represent the monitored road points only,
+                    not the entire city.
+                </p>
+
+            </section>
+
+
+            <!-- TRAFFIC ANALYTICS -->
+
+            <section class="panel analytics-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3>📊 Traffic Congestion Analytics</h3>
+                        <p id="analyticsSubtitle">
+                            Analysis based on monitored traffic points.
+                        </p>
+                    </div>
+
+                    <span class="live-label">● LIVE ANALYTICS</span>
+                </div>
+
+                <div class="live-traffic-grid">
+
+                    <div class="live-traffic-card">
+                        <h4>Average Traffic Speed</h4>
+                        <h2 id="analyticsAverageSpeed">-- km/h</h2>
+                        <p>Across monitored locations</p>
+                    </div>
+
+                    <div class="live-traffic-card">
+                        <h4>Average Congestion</h4>
+                        <h2 id="analyticsCongestion">--%</h2>
+                        <p>Compared with free-flow speed</p>
+                    </div>
+
+                    <div class="live-traffic-card">
+                        <h4>Most Congested Location</h4>
+                        <h2 id="analyticsMostCongested">--</h2>
+                        <p>Among monitored locations</p>
+                    </div>
+
+                </div>
+
+                <div class="analytics-comparison">
+
+                    <h4>📍 Location Speed Comparison</h4>
+
+                    <div id="analyticsLocationComparison">
+
+                        <div class="analytics-location">
+                            <div class="analytics-location-heading">
+                                <span id="analyticsLocationName1">Traffic Point 1</span>
+                                <strong id="analyticsHitecSpeed">-- km/h</strong>
+                                <span id="analyticsHitecCondition"
+                                      class="traffic-condition-badge">
+                                    Waiting...
+                                </span>
+                            </div>
+
+                            <div class="analytics-bar-background">
+                                <div class="analytics-bar"
+                                     id="analyticsHitecBar"></div>
+                            </div>
+                        </div>
+
+                        <div class="analytics-location">
+                            <div class="analytics-location-heading">
+                                <span id="analyticsLocationName2">Traffic Point 2</span>
+                                <strong id="analyticsInorbitSpeed">-- km/h</strong>
+                                <span id="analyticsInorbitCondition"
+                                      class="traffic-condition-badge">
+                                    Waiting...
+                                </span>
+                            </div>
+
+                            <div class="analytics-bar-background">
+                                <div class="analytics-bar"
+                                     id="analyticsInorbitBar"></div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <p id="analyticsUpdated" class="demo-note">
+                    Waiting for traffic analytics...
+                </p>
+
+                <p class="demo-note">
+                    Analytics are based on available monitored road measurements.
+                    They are not city-wide traffic statistics.
+                </p>
+
+            </section>
+
+
+            <!-- TRAFFIC TREND -->
+
+            <section class="panel analytics-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3>📈 Traffic Congestion Trend</h3>
+                        <p id="trafficTrendSubtitle">
+                            Live traffic speed changes over time.
+                        </p>
+                    </div>
+
+                    <span class="live-label">● LIVE TRACKING</span>
+                </div>
+
+                <div class="analytics-comparison">
+
+                    <div id="trafficTrendLegend" class="chart-legend">
+                        <span>Collecting traffic readings...</span>
+                    </div>
+
+                    <div style="width:100%; overflow-x:auto;">
+
+                        <svg
+                            id="trafficTrendChart"
+                            viewBox="0 0 700 300"
+                            role="img"
+                            aria-label="Traffic speed trend for the selected city"
+                            style="width:100%; min-width:320px; height:auto;"
+                        >
+                            <text
+                                x="350"
+                                y="150"
+                                text-anchor="middle"
+                                fill="#64748b"
+                                font-size="15"
+                            >
+                                Collecting live traffic readings...
+                            </text>
+                        </svg>
+
+                    </div>
+
+                </div>
+
+                <p id="trafficTrendStatus" class="demo-note">
+                    Waiting for traffic history...
+                </p>
+
+                <p class="demo-note">
+                    Historical trends begin accumulating after tracking starts.
+                </p>
+
+            </section>
+
+
+            <!-- LIVE TRAFFIC MAP -->
+
+            <section class="panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3 id="dashboardMapHeading">📍 Hyderabad Traffic Map</h3>
+                        <p>Live monitored road locations</p>
+                    </div>
+
+                    <span class="live-label">● LIVE MAP</span>
+                </div>
+
+                <div id="dashboardTrafficMap"></div>
+
+                <div class="traffic-map-legend">
+
+                    <div class="traffic-legend-item">
+                        <span class="traffic-legend-dot traffic-heavy"></span>
+                        Heavy Traffic
+                    </div>
+
+                    <div class="traffic-legend-item">
+                        <span class="traffic-legend-dot traffic-moderate"></span>
+                        Moderate Traffic
+                    </div>
+
+                    <div class="traffic-legend-item">
+                        <span class="traffic-legend-dot traffic-free"></span>
+                        Smooth Traffic
+                    </div>
+
+                </div>
+
+                <p id="dashboardMapStatus" aria-live="polite">
+                    Waiting for live map measurements...
+                </p>
+
+                <p class="demo-note">
+                    Map data © OpenStreetMap contributors.
+                </p>
+
+            </section>
+
+
+            <!-- LIVE OPTIMIZED ROUTE -->
+
+            <section class="panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3>🧭 Live Optimized Route</h3>
+                        <p>Prototype route calculation using the C Dijkstra algorithm</p>
+                    </div>
+                </div>
+
+                <h4 id="liveRoutePath">Waiting for route...</h4>
+
+                <h2 id="liveRouteTime">-- min</h2>
+
+                <p id="liveRouteStatus">
+                    Waiting for route data...
+                </p>
+
+                <p class="demo-note">
+                    This prototype route depends on the configured road graph.
+                    It is not a complete city-wide navigation system.
+                </p>
+
+            </section>
+
+        </section>
+
+
+        <!-- CITY ROUTE PLANNER -->
+
+        <section class="page-view" id="view-city-map">
+
+            <section class="welcome">
+
+                <div>
+                    <p class="eyebrow">OPENSTREETMAP NAVIGATION</p>
+
+                    <h2 id="cityPlannerHeading">Hyderabad City Route Planner</h2>
+
+                    <p id="cityPlannerDescription">
+                        Search locations and explore routes in your selected city.
+                    </p>
+                </div>
+
+                <div class="date-label">CITY ROAD MAP</div>
+
+            </section>
+
+
+            <section class="panel city-route-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3>🧭 Find Your Route</h3>
+                        <p>Choose a starting point and destination.</p>
+                    </div>
+                </div>
+
+                <label for="citySource">Starting Location</label>
+
+                <input
+                    type="text"
+                    id="citySource"
+                    placeholder="Enter starting location"
+                    autocomplete="off"
+                >
+
+                <label for="cityDestination">Destination</label>
+
+                <input
+                    type="text"
+                    id="cityDestination"
+                    placeholder="Enter destination"
+                    autocomplete="off"
+                >
+
+                <div class="button-row">
+
+                    <button id="findCityRoute" type="button">
+                        Find Route →
+                    </button>
+
+                    <button
+                        id="clearCityRoute"
+                        type="button"
+                        class="danger-button">
+                        Clear
+                    </button>
+
+                </div>
+
+                <div class="route-summary" id="cityRouteSummary">
+
+                    <h3>Route Details</h3>
+
+                    <p id="cityRouteStatus">
+                        Enter your starting point and destination.
+                    </p>
+
+                    <div class="route-detail">
+                        <span>Distance</span>
+                        <strong id="cityDistance">--</strong>
+                    </div>
+
+                    <div class="route-detail">
+                        <span>Estimated Time</span>
+                        <strong id="cityDuration">--</strong>
+                    </div>
+
+                    <div class="route-detail">
+                        <span>Route Type</span>
+                        <strong id="cityRouteType">--</strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <section class="panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3 id="cityRouteMapHeading">📍 Hyderabad Road Map</h3>
+                        <p>OpenStreetMap geographical data</p>
+                    </div>
+
+                    <span class="live-label">● MAP VIEW</span>
+                </div>
+
+                <div id="hyderabadMap"></div>
+
+                <p class="demo-note">
+                    Map data © OpenStreetMap contributors.
+                    Route estimates depend on available road data.
+                </p>
+
+            </section>
+
+        </section>
+
+
+        <!-- CITY BUS SERVICES -->
+
+        <section class="page-view" id="view-buses">
+
+            <section class="welcome">
+
+                <div>
+                    <p class="eyebrow" id="busServiceEyebrow">
+                        PUBLIC TRANSPORT
+                    </p>
+
+                    <h2 id="busServiceHeading">City Bus Services</h2>
+
+                    <p id="busServiceDescription">
+                        Explore available bus routes, stops and scheduled services.
+                    </p>
+                </div>
+
+                <div class="date-label" id="busNetworkLabel">
+                    BUS NETWORK
+                </div>
+
+            </section>
+
+
+            <section class="panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3>🚌 Find a City Bus</h3>
+                        <p>Search using a bus number, route or bus stop.</p>
+                    </div>
+
+                    <span class="live-label">● SCHEDULE DATA</span>
+                </div>
+
+                <label for="busSearch">
+                    Bus Number / Route / Stop
+                </label>
+
+                <input
+                    type="text"
+                    id="busSearch"
+                    placeholder="Enter bus number or destination"
+                    autocomplete="off"
+                >
+
+                <div class="button-row">
+
+                    <button type="button" id="searchBuses">
+                        Search Buses →
+                    </button>
+
+                    <button
+                        type="button"
+                        id="clearBusSearch"
+                        class="danger-button">
+                        Clear
+                    </button>
+
+                </div>
+
+                <div
+                    id="busSearchStatus"
+                    class="message"
+                    aria-live="polite">
+                    Bus schedule information will appear here.
+                </div>
+
+            </section>
+
+
+            <section class="panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3>📋 Available Bus Services</h3>
+                        <p id="busFeedDescription">
+                            Published bus route and timetable information.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="busResults">
+                    <p>Bus information is waiting to load.</p>
+                </div>
+
+            </section>
+
+
+            <section class="panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <h3>📍 Bus Service Information</h3>
+                        <p>Understand the service status before travelling.</p>
+                    </div>
+                </div>
+
+                <div class="route-detail">
+                    <span>Route information</span>
+                    <strong>Scheduled data</strong>
+                </div>
+
+                <div class="route-detail">
+                    <span>Live bus location</span>
+                    <strong>Not available through the published feed</strong>
+                </div>
+
+                <div class="route-detail">
+                    <span>Live passenger capacity</span>
+                    <strong>Not available</strong>
+                </div>
+
+                <p class="demo-note" id="busServiceNote">
+                    Schedules do not guarantee that a bus is currently operating.
+                    Check the relevant transport operator for live information.
+                </p>
+
+            </section>
+
+        </section>
+
+
+        <!-- FOOTER -->
+
+        <footer>
+
+            <p>
+                TrafficFlow © 2026 | Advanced Data Structures PBL Project
+            </p>
+
+            <p>
+                Powered by C • Graphs • Dijkstra • Min Heap • AVL Tree • Hash Table
+            </p>
+
+            <p class="demo-note">
+                Live traffic measurements depend on API coverage.
+                City route estimates depend on available map and routing data.
+                Bus information depends on published schedule feeds.
+            </p>
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+<!-- EXTERNAL LIBRARIES -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- PROJECT SCRIPTS -->
+
+<script src="bus.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

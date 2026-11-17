@@ -1,4 +1,4 @@
-const API = window.API_BASE_URL || "http://localhost:8080/api";
+const API = "https://trafficflow-backend-7y4r.onrender.com/api";
 
 // =============================================
 // COMMON HELPERS
@@ -632,12 +632,13 @@ function notifyBusCityChange() {
 // OPENSTREETMAP ROAD DISCOVERY
 // =============================================
 
+
 async function discoverCityRoads(city) {
 
     const radius = 5000;
 
     const query = `
-        [out:json][timeout:15];
+        [out:json][timeout:25];
         way(around:${radius},${city.latitude},${city.longitude})
         ["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified)$"]
         ["name"];
@@ -645,44 +646,61 @@ async function discoverCityRoads(city) {
     `;
 
     const endpoints = [
+        "https://overpass.kumi.systems/api/interpreter",
         "https://overpass-api.de/api/interpreter",
-        "https://overpass.kumi.systems/api/interpreter"
+        "https://overpass.nchc.org.tw/api/interpreter"
     ];
 
     for (const endpoint of endpoints) {
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+
         try {
 
-            const url = endpoint + "?data=" + encodeURIComponent(query);
-
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 12000);
-
-            const response = await fetch(url, {
-                signal: controller.signal
-            });
-
-            clearTimeout(timeout);
+            const response = await fetch(
+                endpoint + "?data=" + encodeURIComponent(query),
+                {
+                    method: "GET",
+                    signal: controller.signal,
+                    cache: "no-store"
+                }
+            );
 
             if (!response.ok) {
-                throw new Error("Road discovery service unavailable.");
+                throw new Error(`HTTP ${response.status}`);
             }
 
             const data = await response.json();
 
             if (data.elements && data.elements.length > 0) {
-                console.log("Hyderabad roads discovered:", data.elements.length);
+
+                console.log(
+                    "Roads successfully discovered:",
+                    data.elements.length
+                );
+
                 return data.elements;
             }
 
         } catch (error) {
 
-            console.warn("Road discovery failed:", endpoint, error);
+            console.warn(
+                "Road discovery failed:",
+                endpoint,
+                error.message
+            );
+
+        } finally {
+
+            clearTimeout(timeout);
 
         }
     }
 
-    console.warn("Overpass unavailable. Using fallback road locations.");
+    console.warn(
+        "All Overpass servers unavailable. Using fallback roads."
+    );
 
     return [
         { tags: { name: "HITEC City Road" }, center: { lat: 17.4435, lon: 78.3772 } },
@@ -695,6 +713,7 @@ async function discoverCityRoads(city) {
         { tags: { name: "Secunderabad Road" }, center: { lat: 17.4399, lon: 78.4983 } }
     ];
 }
+
 
 function selectRoadSamplePoints(elements) {
 

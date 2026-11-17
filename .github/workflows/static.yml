@@ -36,7 +36,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-          path: ./frontend
-      - id: deployment
-        uses: actions/deploy-pages@v4
-        uses: actions/deploy-pages@v4/deploy-pages@v5
